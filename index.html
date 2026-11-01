@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173f35">
+  <title>LifeHub</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root{--bg:#f4f6f3;--card:#fff;--ink:#18231f;--muted:#6c7973;--green:#1f6b55;--line:#e4eae5;--soft:#eaf2ed}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+    .app{max-width:760px;margin:auto;min-height:100vh;padding:22px 18px 90px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+    .brand{font-size:20px;font-weight:800;letter-spacing:-.5px}.brand span{color:var(--green)}
+    .avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--green);font-weight:700}
+    h1{font-size:29px;letter-spacing:-1px;margin:0 0 5px} .sub{color:var(--muted);margin:0 0 22px}
+    .section-title{font-size:17px;font-weight:750;margin:27px 0 13px}
+    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px}
+    .stat-icon{font-size:19px}.stat-num{font-size:27px;font-weight:800;margin:7px 0 0}.stat-label{font-size:12px;color:var(--muted)}
+    .task{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
+    .task:last-child{border:0}.task input{width:19px;height:19px;accent-color:var(--green)}
+    .task.done .task-text{text-decoration:line-through;color:#9aa59f}
+    .task-text{flex:1}.task small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+    .add-row{display:flex;gap:8px;margin-top:13px}.add-row input,.note-input{min-width:0;flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;font:inherit}
+    button{border:0;border-radius:12px;background:var(--green);color:white;padding:0 16px;font:inherit;font-weight:650;cursor:pointer}
+    .quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick button{background:var(--soft);color:var(--green);padding:15px 12px;text-align:left}
+    .quick span{display:block;font-size:20px;margin-bottom:6px}
+    nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;gap:min(8vw,55px);padding:11px 12px calc(11px + env(safe-area-inset-bottom))}
+    nav button{background:none;color:var(--muted);padding:5px 8px;font-size:12px}nav button.active{color:var(--green)}
+    nav b{display:block;font-size:19px;margin-bottom:2px}
+    .page{display:none}.page.active{display:block}.empty{color:var(--muted);padding:18px 0}
+    .note{white-space:pre-wrap;line-height:1.5}.hint{font-size:12px;color:var(--muted);margin-top:12px}
+    @media(min-width:600px){.stats{grid-template-columns:repeat(4,1fr)}.quick{grid-template-columns:repeat(4,1fr)}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header><div class="brand">Life<span>Hub</span></div><div class="avatar">L</div></header>
+
+  <main id="dashboard" class="page active">
+    <h1 id="greeting">Goedemorgen!</h1>
+    <p class="sub" id="today"></p>
+    <section class="stats">
+      <div class="card"><div class="stat-icon">☑️</div><div class="stat-num" id="openCount">0</div><div class="stat-label">Openstaande taken</div></div>
+      <div class="card"><div class="stat-icon">📅</div><div class="stat-num">0</div><div class="stat-label">Afspraken vandaag</div></div>
+      <div class="card"><div class="stat-icon">🛒</div><div class="stat-num">0</div><div class="stat-label">Boodschappen</div></div>
+      <div class="card"><div class="stat-icon">🎯</div><div class="stat-num">0</div><div class="stat-label">Actieve doelen</div></div>
+    </section>
+    <h2 class="section-title">Mijn taken</h2>
+    <div class="card"><div id="dashboardTasks"></div>
+      <div class="add-row"><input id="quickTask" placeholder="Nieuwe taak toevoegen..." aria-label="Nieuwe taak"><button id="addQuick">+</button></div>
+    </div>
+    <h2 class="section-title">Snel naar</h2>
+    <div class="quick">
+      <button data-go="tasks"><span>☑️</span>Taken</button>
+      <button data-go="notes"><span>📝</span>Notities</button>
+      <button data-go="tasks"><span>📅</span>Planning</button>
+      <button data-go="tasks"><span>🛒</span>Boodschappen</button>
+    </div>
+    <p class="hint">Dit is LifeHub versie 1.0. Je gegevens worden lokaal op dit apparaat bewaard.</p>
+  </main>
+
+  <main id="tasks" class="page">
+    <h1>Taken</h1><p class="sub">Houd overzicht over wat je nog wilt doen.</p>
+    <div class="card"><div id="allTasks"></div>
+      <div class="add-row"><input id="newTask" placeholder="Bijvoorbeeld: vuilnis buitenzetten"><button id="addTask">Toevoegen</button></div>
+    </div>
+  </main>
+
+  <main id="notes" class="page">
+    <h1>Notities</h1><p class="sub">Bewaar ideeën en dingen die je niet wilt vergeten.</p>
+    <div class="card">
+      <textarea id="notesText" class="note-input" rows="9" placeholder="Schrijf hier je notities..."></textarea>
+      <p class="hint">Notities worden automatisch op dit apparaat opgeslagen.</p>
+    </div>
+  </main>
+</div>
+<nav>
+  <button class="active" data-page="dashboard"><b>⌂</b>Home</button>
+  <button data-page="tasks"><b>☑</b>Taken</button>
+  <button data-page="notes"><b>▤</b>Notities</button>
+</nav>
+<script>
+const $ = id => document.getElementById(id);
+const today = new Date();
+$('today').textContent = today.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
+const hour=today.getHours(); $('greeting').textContent=hour<12?'Goedemorgen!':hour<18?'Goedemiddag!':'Goedenavond!';
+let tasks=JSON.parse(localStorage.getItem('lifehub_tasks')||'[]');
+if(!tasks.length) tasks=[{id:1,text:'LifeHub verder inrichten',done:false},{id:2,text:'Mijn week plannen',done:false}];
+let notes=localStorage.getItem('lifehub_notes')||'';
+$('notesText').value=notes;
+function save(){localStorage.setItem('lifehub_tasks',JSON.stringify(tasks));}
+function render(){
+  $('openCount').textContent=tasks.filter(t=>!t.done).length;
+  const html=tasks.length?tasks.map(t=>`<div class="task ${t.done?'done':''}"><input type="checkbox" ${t.done?'checked':''} data-toggle="${t.id}"><div class="task-text">${escapeHtml(t.text)}</div><button aria-label="Verwijderen" data-delete="${t.id}" style="background:none;color:#9aa59f;padding:4px 7px">×</button></div>`).join(''):'<div class="empty">Nog geen taken. Voeg hieronder je eerste taak toe.</div>';
+  $('dashboardTasks').innerHTML=html; $('allTasks').innerHTML=html;
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function addTask(value){const text=value.trim();if(!text)return;tasks.unshift({id:Date.now(),text,done:false});save();render();}
+function handleTaskAction(e){
+ const toggle=e.target.dataset.toggle, del=e.target.dataset.delete;
+ if(toggle){const t=tasks.find(x=>x.id==toggle);if(t)t.done=!t.done;save();render();}
+ if(del){tasks=tasks.filter(x=>x.id!=del);save();render();}
+}
+document.addEventListener('click',e=>{
+ if(e.target.dataset.page){showPage(e.target.dataset.page);}
+ if(e.target.dataset.go){showPage(e.target.dataset.go);}
+});
+document.addEventListener('change',handleTaskAction);
+document.addEventListener('click',e=>{if(e.target.dataset.delete)handleTaskAction(e);});
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));}
+$('addTask').onclick=()=>{addTask($('newTask').value);$('newTask').value='';};
+$('addQuick').onclick=()=>{addTask($('quickTask').value);$('quickTask').value='';};
+$('newTask').addEventListener('keydown',e=>{if(e.key==='Enter')$('addTask').click();});
+$('quickTask').addEventListener('keydown',e=>{if(e.key==='Enter')$('addQuick').click();});
+$('notesText').addEventListener('input',e=>localStorage.setItem('lifehub_notes',e.target.value));
+render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>
